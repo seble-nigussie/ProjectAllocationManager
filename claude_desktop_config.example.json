@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "project-allocation-manager": {
+      "command": "dotnet",
+      "args": ["run", "--project", "/ABSOLUTE/PATH/TO/ProjectAllocationManager"]
+    }
+  }
+}

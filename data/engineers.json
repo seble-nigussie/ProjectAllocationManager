@@ -1,0 +1,32 @@
+[
+  {
+    "id": "eng-001",
+    "name": "Alice Johnson",
+    "role": "Senior Software Engineer",
+    "skills": ["C#", ".NET", "React"]
+  },
+  {
+    "id": "eng-002",
+    "name": "Bob Smith",
+    "role": "Full Stack Developer",
+    "skills": ["Python", "JavaScript", "Docker"]
+  },
+  {
+    "id": "eng-003",
+    "name": "Carol Williams",
+    "role": "Frontend Developer",
+    "skills": ["React", "TypeScript", "CSS"]
+  },
+  {
+    "id": "eng-004",
+    "name": "David Brown",
+    "role": "Backend Engineer",
+    "skills": ["Java", "Spring", "PostgreSQL"]
+  },
+  {
+    "id": "eng-005",
+    "name": "Emma Davis",
+    "role": "DevOps Engineer",
+    "skills": ["Kubernetes", "AWS", "Terraform"]
+  }
+]
