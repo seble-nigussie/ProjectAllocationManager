@@ -4,12 +4,19 @@ A Model Context Protocol (MCP) server for managing project allocations, engineer
 
 ## Overview
 
-This MCP server allows you to:
+This MCP server provides:
+
+**Tools** for managing allocations:
 - Allocate engineers to projects with specific percentage allocations
 - Update existing allocations
 - View engineer allocations and project assignments
 - Identify engineers on the bench (0% allocated)
 - Prevent over-allocation of resources
+
+**Resources** for accessing data:
+- Browse all projects, engineers, and allocations
+- Get detailed information about specific engineers or projects
+- Access data in both formatted and raw JSON formats
 
 ## Project Structure
 
@@ -28,6 +35,8 @@ ProjectAllocationManager/
 ├── Tools/
 │   ├── AllocationTools.cs # Allocation & update tools
 │   └── QueryTools.cs      # Query & list tools
+├── Resources/
+│   └── AllocationResources.cs # MCP resources for data access
 ├── Program.cs             # MCP server initialization
 └── README.md
 ```
@@ -138,6 +147,51 @@ List all engineers with their details.
 List all projects with their details.
 
 **Parameters:** None
+
+## Available MCP Resources
+
+Resources provide read-only access to project allocation data in a structured format.
+
+### Static Resources
+
+#### 1. allocation://projects/list
+Get a formatted list of all projects with their details, status, and descriptions.
+
+#### 2. allocation://engineers/list
+Get a formatted list of all engineers with their roles, skills, and details.
+
+#### 3. allocation://allocations/list
+Get a formatted list of all current allocations across engineers and projects.
+
+#### 4. allocation://projects/json
+Get raw JSON data of all projects.
+
+#### 5. allocation://engineers/json
+Get raw JSON data of all engineers.
+
+#### 6. allocation://allocations/json
+Get raw JSON data of all allocations.
+
+### Dynamic Resources
+
+#### 7. allocation://engineer/{engineerId}
+Get detailed information about a specific engineer including:
+- Personal details (name, role, skills)
+- Total allocation percentage
+- Available capacity
+- List of current project assignments
+- Allocation details with dates
+
+**Example:** `allocation://engineer/eng-001`
+
+#### 8. allocation://project/{projectId}
+Get detailed information about a specific project including:
+- Project details (name, status, description)
+- Total engineer allocation
+- List of assigned engineers
+- Individual allocation percentages and durations
+
+**Example:** `allocation://project/proj-001`
 
 ## Setup
 
