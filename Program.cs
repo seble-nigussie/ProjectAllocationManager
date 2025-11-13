@@ -10,6 +10,10 @@ var builder = Host.CreateApplicationBuilder(args);
 // Register services
 builder.Services.AddSingleton<AllocationService>();
 
+// Register tool classes
+builder.Services.AddSingleton<AllocationTools>();
+builder.Services.AddSingleton<QueryTools>();
+
 var host = builder.Build();
 
 // Create MCP server
@@ -21,11 +25,8 @@ var server = new MCPServer(
     new ServerOptions()
 );
 
-var allocationService = host.Services.GetRequiredService<AllocationService>();
-
-// Register all tools
-server.RegisterAllocationTools(allocationService);
-server.RegisterQueryTools(allocationService);
+// Auto-discover and register all tools from assembly using reflection
+server.WithToolsFromAssembly(host.Services);
 
 // Start the server
 await server.RunAsync();

@@ -1,117 +1,74 @@
-using ModelContextProtocol.NET.Server;
+using System.ComponentModel;
+using ModelContextProtocol;
 using ProjectAllocationManager.Services;
 
 namespace ProjectAllocationManager.Tools;
 
-public static class QueryTools
+public class QueryTools
 {
-    public static void RegisterQueryTools(this MCPServer server, AllocationService allocationService)
+    private readonly AllocationService _allocationService;
+
+    public QueryTools(AllocationService allocationService)
     {
-        RegisterGetEngineerAllocations(server, allocationService);
-        RegisterGetBenchEngineers(server, allocationService);
-        RegisterGetAllAllocations(server, allocationService);
-        RegisterListEngineers(server, allocationService);
-        RegisterListProjects(server, allocationService);
+        _allocationService = allocationService;
     }
 
-    private static void RegisterGetEngineerAllocations(MCPServer server, AllocationService allocationService)
+    [McpServerTool, Description("View all allocations for a specific engineer")]
+    public async Task<object> GetEngineerAllocations(
+        [Description("The ID of the engineer (e.g., 'eng-001')")] string engineerId)
     {
-        server.AddTool(
-            "get_engineer_allocations",
-            "View all allocations for a specific engineer",
-            new Dictionary<string, object>
-            {
-                ["engineerId"] = new
-                {
-                    type = "string",
-                    description = "The ID of the engineer (e.g., 'eng-001')"
-                }
-            },
-            async (arguments) =>
-            {
-                var engineerId = arguments["engineerId"]?.ToString() ?? "";
-                var result = await allocationService.GetEngineerAllocationsAsync(engineerId);
+        var result = await _allocationService.GetEngineerAllocationsAsync(engineerId);
 
-                return new
-                {
-                    engineerId,
-                    details = result
-                };
-            }
-        );
+        return new
+        {
+            engineerId,
+            details = result
+        };
     }
 
-    private static void RegisterGetBenchEngineers(MCPServer server, AllocationService allocationService)
+    [McpServerTool, Description("Get a list of all engineers with 0% allocation (on bench/available)")]
+    public async Task<object> GetBenchEngineers()
     {
-        server.AddTool(
-            "get_bench_engineers",
-            "Get a list of all engineers with 0% allocation (on bench/available)",
-            new Dictionary<string, object>(),
-            async (arguments) =>
-            {
-                var result = await allocationService.GetBenchEngineersAsync();
+        var result = await _allocationService.GetBenchEngineersAsync();
 
-                return new
-                {
-                    details = result
-                };
-            }
-        );
+        return new
+        {
+            details = result
+        };
     }
 
-    private static void RegisterGetAllAllocations(MCPServer server, AllocationService allocationService)
+    [McpServerTool, Description("View all current allocations across all engineers and projects")]
+    public async Task<object> GetAllAllocations()
     {
-        server.AddTool(
-            "get_all_allocations",
-            "View all current allocations across all engineers and projects",
-            new Dictionary<string, object>(),
-            async (arguments) =>
-            {
-                var result = await allocationService.GetAllAllocationsAsync();
+        var result = await _allocationService.GetAllAllocationsAsync();
 
-                return new
-                {
-                    details = result
-                };
-            }
-        );
+        return new
+        {
+            details = result
+        };
     }
 
-    private static void RegisterListEngineers(MCPServer server, AllocationService allocationService)
+    [McpServerTool, Description("List all engineers with their details")]
+    public async Task<object> ListEngineers()
     {
-        server.AddTool(
-            "list_engineers",
-            "List all engineers with their details",
-            new Dictionary<string, object>(),
-            async (arguments) =>
-            {
-                var engineers = await allocationService.GetEngineersAsync();
+        var engineers = await _allocationService.GetEngineersAsync();
 
-                return new
-                {
-                    count = engineers.Count,
-                    engineers
-                };
-            }
-        );
+        return new
+        {
+            count = engineers.Count,
+            engineers
+        };
     }
 
-    private static void RegisterListProjects(MCPServer server, AllocationService allocationService)
+    [McpServerTool, Description("List all projects with their details")]
+    public async Task<object> ListProjects()
     {
-        server.AddTool(
-            "list_projects",
-            "List all projects with their details",
-            new Dictionary<string, object>(),
-            async (arguments) =>
-            {
-                var projects = await allocationService.GetProjectsAsync();
+        var projects = await _allocationService.GetProjectsAsync();
 
-                return new
-                {
-                    count = projects.Count,
-                    projects
-                };
-            }
-        );
+        return new
+        {
+            count = projects.Count,
+            projects
+        };
     }
 }
