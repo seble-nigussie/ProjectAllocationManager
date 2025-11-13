@@ -186,13 +186,20 @@ Add this configuration to your Claude Desktop config file:
   "mcpServers": {
     "project-allocation-manager": {
       "command": "dotnet",
-      "args": ["run", "--project", "/path/to/ProjectAllocationManager"]
+      "args": [
+        "run",
+        "--project",
+        "/path/to/ProjectAllocationManager",
+        "--no-build"
+      ]
     }
   }
 }
 ```
 
 Replace `/path/to/ProjectAllocationManager` with the actual path to your project directory.
+
+**Note:** The `--no-build` flag is recommended to avoid build output interfering with STDIO communication.
 
 ## Usage Examples
 

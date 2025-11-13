@@ -1,23 +1,19 @@
 using System.ComponentModel;
 using ModelContextProtocol;
+using ModelContextProtocol.Server;
 using ProjectAllocationManager.Services;
 
 namespace ProjectAllocationManager.Tools;
 
-public class QueryTools
+[McpServerToolType]
+public static class QueryTools
 {
-    private readonly AllocationService _allocationService;
-
-    public QueryTools(AllocationService allocationService)
-    {
-        _allocationService = allocationService;
-    }
-
     [McpServerTool, Description("View all allocations for a specific engineer")]
-    public async Task<object> GetEngineerAllocations(
+    public static async Task<object> GetEngineerAllocations(
+        AllocationService allocationService,
         [Description("The ID of the engineer (e.g., 'eng-001')")] string engineerId)
     {
-        var result = await _allocationService.GetEngineerAllocationsAsync(engineerId);
+        var result = await allocationService.GetEngineerAllocationsAsync(engineerId);
 
         return new
         {
@@ -27,9 +23,9 @@ public class QueryTools
     }
 
     [McpServerTool, Description("Get a list of all engineers with 0% allocation (on bench/available)")]
-    public async Task<object> GetBenchEngineers()
+    public static async Task<object> GetBenchEngineers(AllocationService allocationService)
     {
-        var result = await _allocationService.GetBenchEngineersAsync();
+        var result = await allocationService.GetBenchEngineersAsync();
 
         return new
         {
@@ -38,9 +34,9 @@ public class QueryTools
     }
 
     [McpServerTool, Description("View all current allocations across all engineers and projects")]
-    public async Task<object> GetAllAllocations()
+    public static async Task<object> GetAllAllocations(AllocationService allocationService)
     {
-        var result = await _allocationService.GetAllAllocationsAsync();
+        var result = await allocationService.GetAllAllocationsAsync();
 
         return new
         {
@@ -49,9 +45,9 @@ public class QueryTools
     }
 
     [McpServerTool, Description("List all engineers with their details")]
-    public async Task<object> ListEngineers()
+    public static async Task<object> ListEngineers(AllocationService allocationService)
     {
-        var engineers = await _allocationService.GetEngineersAsync();
+        var engineers = await allocationService.GetEngineersAsync();
 
         return new
         {
@@ -61,9 +57,9 @@ public class QueryTools
     }
 
     [McpServerTool, Description("List all projects with their details")]
-    public async Task<object> ListProjects()
+    public static async Task<object> ListProjects(AllocationService allocationService)
     {
-        var projects = await _allocationService.GetProjectsAsync();
+        var projects = await allocationService.GetProjectsAsync();
 
         return new
         {
