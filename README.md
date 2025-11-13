@@ -25,7 +25,10 @@ ProjectAllocationManager/
 │   └── Allocation.cs
 ├── Services/
 │   └── AllocationService.cs
-├── Program.cs             # MCP server implementation
+├── Tools/
+│   ├── AllocationTools.cs # Allocation & update tools
+│   └── QueryTools.cs      # Query & list tools
+├── Program.cs             # MCP server initialization
 └── README.md
 ```
 
