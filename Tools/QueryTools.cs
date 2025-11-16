@@ -67,4 +67,32 @@ public static class QueryTools
             projects
         };
     }
+
+    [McpServerTool, Description("Get allocation history for a specific project, including all past and current engineers who worked on it")]
+    public static async Task<object> GetProjectAllocationHistory(
+        AllocationService allocationService,
+        [Description("The ID of the project (e.g., 'proj-001')")] string projectId)
+    {
+        var result = await allocationService.GetProjectAllocationHistoryAsync(projectId);
+
+        return new
+        {
+            projectId,
+            history = result
+        };
+    }
+
+    [McpServerTool, Description("Get allocation history for a specific engineer, including all past and current projects they worked on")]
+    public static async Task<object> GetEngineerAllocationHistory(
+        AllocationService allocationService,
+        [Description("The ID of the engineer (e.g., 'eng-001')")] string engineerId)
+    {
+        var result = await allocationService.GetEngineerAllocationHistoryAsync(engineerId);
+
+        return new
+        {
+            engineerId,
+            history = result
+        };
+    }
 }

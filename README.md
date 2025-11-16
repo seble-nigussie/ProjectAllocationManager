@@ -171,6 +171,62 @@ List all projects with their details.
 
 **Parameters:** None
 
+### 9. get_project_allocation_history
+Get the complete allocation history for a specific project, including current, completed, and cancelled allocations.
+
+**Parameters:**
+- `projectId` (string): The ID of the project (e.g., 'proj-001')
+
+**What it shows:**
+- All engineers who ever worked on the project
+- Current (active) allocations
+- Completed allocations (finished projects)
+- Cancelled allocations (removed before completion)
+- Time periods for each allocation
+
+**Example:**
+```json
+{
+  "projectId": "proj-001"
+}
+```
+
+### 10. get_engineer_allocation_history
+Get the complete allocation history for a specific engineer, including current, completed, and cancelled allocations.
+
+**Parameters:**
+- `engineerId` (string): The ID of the engineer (e.g., 'eng-001')
+
+**What it shows:**
+- All projects the engineer has ever worked on
+- Current (active) allocations with total percentage
+- Completed allocations (finished projects)
+- Cancelled allocations (removed before completion)
+- Time periods for each allocation
+
+**Example:**
+```json
+{
+  "engineerId": "eng-001"
+}
+```
+
+## Allocation Status Tracking
+
+The system now tracks allocation history with three status values:
+
+- **active**: Currently ongoing allocations
+- **completed**: Allocations that finished naturally (past end date)
+- **cancelled**: Allocations removed before completion (e.g., moved to bench)
+
+**Benefits:**
+- Track who worked on projects historically
+- Maintain audit trail of allocations
+- Answer questions like "Who has worked on this project?" including past team members
+- Analyze resource allocation patterns over time
+
+**Note:** When you move an engineer to the bench, their allocations are marked as "cancelled" rather than deleted, preserving the history.
+
 ## Available MCP Resources
 
 Resources provide read-only access to project allocation data in a structured format.

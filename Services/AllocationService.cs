@@ -78,8 +78,8 @@ public class AllocationService
             return (false, $"Project with ID '{projectId}' not found.", null);
         }
 
-        // Check if engineer is over-allocated
-        var existingAllocations = allocations.Where(a => a.EngineerId == engineerId).ToList();
+        // Check if engineer is over-allocated (only count active allocations)
+        var existingAllocations = allocations.Where(a => a.EngineerId == engineerId && a.Status == "active").ToList();
         var totalAllocation = existingAllocations.Sum(a => a.AllocationPercentage) + allocationPercentage;
 
         if (totalAllocation > 100)
@@ -95,7 +95,8 @@ public class AllocationService
             ProjectId = projectId,
             AllocationPercentage = allocationPercentage,
             StartDate = startDate,
-            EndDate = endDate
+            EndDate = endDate,
+            Status = "active"
         };
 
         allocations.Add(newAllocation);
@@ -128,8 +129,8 @@ public class AllocationService
                 return (false, "Allocation percentage must be between 0 and 100.");
             }
 
-            // Check if update would cause over-allocation
-            var engineerAllocations = allocations.Where(a => a.EngineerId == allocation.EngineerId && a.Id != allocationId).ToList();
+            // Check if update would cause over-allocation (only count active allocations)
+            var engineerAllocations = allocations.Where(a => a.EngineerId == allocation.EngineerId && a.Id != allocationId && a.Status == "active").ToList();
             var totalAllocation = engineerAllocations.Sum(a => a.AllocationPercentage) + newPercentage.Value;
 
             if (totalAllocation > 100)
@@ -166,22 +167,25 @@ public class AllocationService
             return (false, $"Engineer with ID '{engineerId}' not found.", 0);
         }
 
-        var engineerAllocations = allocations.Where(a => a.EngineerId == engineerId).ToList();
+        var engineerAllocations = allocations.Where(a => a.EngineerId == engineerId && a.Status == "active").ToList();
 
         if (!engineerAllocations.Any())
         {
-            return (true, $"Engineer '{engineer.Name}' is already on the bench (no allocations to remove).", 0);
+            return (true, $"Engineer '{engineer.Name}' is already on the bench (no active allocations to remove).", 0);
         }
 
         var removedCount = engineerAllocations.Count;
         var removedAllocationIds = engineerAllocations.Select(a => a.Id).ToList();
 
-        // Remove all allocations for this engineer
-        var updatedAllocations = allocations.Where(a => a.EngineerId != engineerId).ToList();
-        await SaveAllocationsAsync(updatedAllocations);
+        // Mark all active allocations as cancelled instead of deleting them
+        foreach (var allocation in engineerAllocations)
+        {
+            allocation.Status = "cancelled";
+        }
+        await SaveAllocationsAsync(allocations);
 
         var removedProjects = string.Join(", ", removedAllocationIds);
-        return (true, $"Successfully moved {engineer.Name} to bench. Removed {removedCount} allocation(s): {removedProjects}.", removedCount);
+        return (true, $"Successfully moved {engineer.Name} to bench. Cancelled {removedCount} allocation(s): {removedProjects}.", removedCount);
     }
 
     public async Task<string> GetEngineerAllocationsAsync(string engineerId)
@@ -196,7 +200,8 @@ public class AllocationService
             return $"Engineer with ID '{engineerId}' not found.";
         }
 
-        var engineerAllocations = allocations.Where(a => a.EngineerId == engineerId).ToList();
+        // Only show active allocations
+        var engineerAllocations = allocations.Where(a => a.EngineerId == engineerId && a.Status == "active").ToList();
 
         if (!engineerAllocations.Any())
         {
@@ -226,8 +231,9 @@ public class AllocationService
 
         foreach (var engineer in engineers)
         {
+            // Only count active allocations
             var totalAllocation = allocations
-                .Where(a => a.EngineerId == engineer.Id)
+                .Where(a => a.EngineerId == engineer.Id && a.Status == "active")
                 .Sum(a => a.AllocationPercentage);
 
             if (totalAllocation == 0)
@@ -258,14 +264,17 @@ public class AllocationService
         var projects = await GetProjectsAsync();
         var allocations = await GetAllocationsAsync();
 
-        if (!allocations.Any())
+        // Only show active allocations
+        var activeAllocations = allocations.Where(a => a.Status == "active").ToList();
+
+        if (!activeAllocations.Any())
         {
-            return "No allocations found.";
+            return "No active allocations found.";
         }
 
-        var result = "All Allocations:\n\n";
+        var result = "All Active Allocations:\n\n";
 
-        foreach (var allocation in allocations)
+        foreach (var allocation in activeAllocations)
         {
             var engineer = engineers.FirstOrDefault(e => e.Id == allocation.EngineerId);
             var project = projects.FirstOrDefault(p => p.Id == allocation.ProjectId);
@@ -273,6 +282,137 @@ public class AllocationService
             result += $"  [{allocation.Id}] {engineer?.Name ?? allocation.EngineerId} → {project?.Name ?? allocation.ProjectId}\n";
             result += $"    Allocation: {allocation.AllocationPercentage}%\n";
             result += $"    Duration: {allocation.StartDate} to {allocation.EndDate}\n\n";
+        }
+
+        return result;
+    }
+
+    public async Task<string> GetProjectAllocationHistoryAsync(string projectId)
+    {
+        var engineers = await GetEngineersAsync();
+        var projects = await GetProjectsAsync();
+        var allocations = await GetAllocationsAsync();
+
+        var project = projects.FirstOrDefault(p => p.Id == projectId);
+        if (project == null)
+        {
+            return $"Project with ID '{projectId}' not found.";
+        }
+
+        var projectAllocations = allocations.Where(a => a.ProjectId == projectId).ToList();
+
+        if (!projectAllocations.Any())
+        {
+            return $"Project: {project.Name}\n\nNo allocation history found for this project.";
+        }
+
+        var result = $"Project: {project.Name} ({project.Status})\n";
+        result += $"Description: {project.Description}\n\n";
+        result += "Allocation History:\n\n";
+
+        var activeAllocations = projectAllocations.Where(a => a.Status == "active").ToList();
+        var completedAllocations = projectAllocations.Where(a => a.Status == "completed").ToList();
+        var cancelledAllocations = projectAllocations.Where(a => a.Status == "cancelled").ToList();
+
+        if (activeAllocations.Any())
+        {
+            result += "CURRENT (Active):\n";
+            foreach (var allocation in activeAllocations)
+            {
+                var engineer = engineers.FirstOrDefault(e => e.Id == allocation.EngineerId);
+                result += $"  - {engineer?.Name ?? allocation.EngineerId} ({engineer?.Role}): {allocation.AllocationPercentage}%\n";
+                result += $"    Period: {allocation.StartDate} to {allocation.EndDate}\n";
+            }
+            result += "\n";
+        }
+
+        if (completedAllocations.Any())
+        {
+            result += "COMPLETED:\n";
+            foreach (var allocation in completedAllocations)
+            {
+                var engineer = engineers.FirstOrDefault(e => e.Id == allocation.EngineerId);
+                result += $"  - {engineer?.Name ?? allocation.EngineerId} ({engineer?.Role}): {allocation.AllocationPercentage}%\n";
+                result += $"    Period: {allocation.StartDate} to {allocation.EndDate}\n";
+            }
+            result += "\n";
+        }
+
+        if (cancelledAllocations.Any())
+        {
+            result += "CANCELLED:\n";
+            foreach (var allocation in cancelledAllocations)
+            {
+                var engineer = engineers.FirstOrDefault(e => e.Id == allocation.EngineerId);
+                result += $"  - {engineer?.Name ?? allocation.EngineerId} ({engineer?.Role}): {allocation.AllocationPercentage}%\n";
+                result += $"    Period: {allocation.StartDate} to {allocation.EndDate}\n";
+            }
+        }
+
+        return result;
+    }
+
+    public async Task<string> GetEngineerAllocationHistoryAsync(string engineerId)
+    {
+        var engineers = await GetEngineersAsync();
+        var projects = await GetProjectsAsync();
+        var allocations = await GetAllocationsAsync();
+
+        var engineer = engineers.FirstOrDefault(e => e.Id == engineerId);
+        if (engineer == null)
+        {
+            return $"Engineer with ID '{engineerId}' not found.";
+        }
+
+        var engineerAllocations = allocations.Where(a => a.EngineerId == engineerId).ToList();
+
+        if (!engineerAllocations.Any())
+        {
+            return $"Engineer: {engineer.Name} ({engineer.Role})\n\nNo allocation history found.";
+        }
+
+        var result = $"Engineer: {engineer.Name} ({engineer.Role})\n";
+        result += $"Skills: {string.Join(", ", engineer.Skills)}\n\n";
+        result += "Allocation History:\n\n";
+
+        var activeAllocations = engineerAllocations.Where(a => a.Status == "active").ToList();
+        var completedAllocations = engineerAllocations.Where(a => a.Status == "completed").ToList();
+        var cancelledAllocations = engineerAllocations.Where(a => a.Status == "cancelled").ToList();
+
+        if (activeAllocations.Any())
+        {
+            var totalActive = activeAllocations.Sum(a => a.AllocationPercentage);
+            result += $"CURRENT (Active) - Total: {totalActive}%:\n";
+            foreach (var allocation in activeAllocations)
+            {
+                var project = projects.FirstOrDefault(p => p.Id == allocation.ProjectId);
+                result += $"  - {project?.Name ?? allocation.ProjectId}: {allocation.AllocationPercentage}%\n";
+                result += $"    Period: {allocation.StartDate} to {allocation.EndDate}\n";
+            }
+            result += "\n";
+        }
+
+        if (completedAllocations.Any())
+        {
+            result += "COMPLETED:\n";
+            foreach (var allocation in completedAllocations)
+            {
+                var project = projects.FirstOrDefault(p => p.Id == allocation.ProjectId);
+                result += $"  - {project?.Name ?? allocation.ProjectId}: {allocation.AllocationPercentage}%\n";
+                result += $"    Period: {allocation.StartDate} to {allocation.EndDate}\n";
+            }
+            result += "\n";
+        }
+
+        if (cancelledAllocations.Any())
+        {
+            result += "CANCELLED:\n";
+            foreach (var allocation in cancelledAllocations)
+            {
+                var project = projects.FirstOrDefault(p => p.Id == allocation.ProjectId);
+                result += $"  - {project?.Name ?? allocation.ProjectId}: {allocation.AllocationPercentage}%\n";
+                result += $"    Period: {allocation.StartDate} to {allocation.EndDate}\n";
+            }
         }
 
         return result;

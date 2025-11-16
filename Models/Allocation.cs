@@ -8,4 +8,5 @@ public class Allocation
     public int AllocationPercentage { get; set; }
     public string StartDate { get; set; } = string.Empty;
     public string EndDate { get; set; } = string.Empty;
+    public string Status { get; set; } = "active"; // active, completed, cancelled
 }
