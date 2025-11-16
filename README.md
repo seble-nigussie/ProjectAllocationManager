@@ -172,17 +172,16 @@ List all projects with their details.
 **Parameters:** None
 
 ### 9. get_project_allocation_history
-Get the complete allocation history for a specific project, including current, completed, and cancelled allocations.
+Get the complete allocation history for a specific project in chronological order.
 
 **Parameters:**
 - `projectId` (string): The ID of the project (e.g., 'proj-001')
 
 **What it shows:**
 - All engineers who ever worked on the project
-- Current (active) allocations
-- Completed allocations (finished projects)
-- Cancelled allocations (removed before completion)
-- Time periods for each allocation
+- Chronological list showing: Engineer from Date1 to Date2
+- Each entry marked as [CURRENT] or [PAST] based on end date
+- Allocation percentages and time periods
 
 **Example:**
 ```json
@@ -191,18 +190,31 @@ Get the complete allocation history for a specific project, including current, c
 }
 ```
 
+**Sample Output:**
+```
+Project: Project Alpha (active)
+
+Allocation History (chronological order by start date):
+
+  - Carol Williams (Frontend Developer): 75%
+    Period: 2024-06-01 to 2024-12-31 [PAST]
+  - Alice Johnson (Senior Software Engineer): 50%
+    Period: 2025-01-01 to 2025-06-30 [CURRENT]
+  - Bob Smith (Full Stack Developer): 100%
+    Period: 2025-01-01 to 2025-12-31 [CURRENT]
+```
+
 ### 10. get_engineer_allocation_history
-Get the complete allocation history for a specific engineer, including current, completed, and cancelled allocations.
+Get the complete allocation history for a specific engineer in chronological order.
 
 **Parameters:**
 - `engineerId` (string): The ID of the engineer (e.g., 'eng-001')
 
 **What it shows:**
 - All projects the engineer has ever worked on
-- Current (active) allocations with total percentage
-- Completed allocations (finished projects)
-- Cancelled allocations (removed before completion)
-- Time periods for each allocation
+- Current total allocation and available capacity
+- Chronological list showing: Project from Date1 to Date2
+- Each entry marked as [CURRENT] or [PAST] based on end date
 
 **Example:**
 ```json
@@ -211,21 +223,48 @@ Get the complete allocation history for a specific engineer, including current, 
 }
 ```
 
-## Allocation Status Tracking
+**Sample Output:**
+```
+Engineer: Alice Johnson (Senior Software Engineer)
+Skills: C#, .NET, React
 
-The system now tracks allocation history with three status values:
+Current Total Allocation: 100%
+Available Capacity: 0%
 
-- **active**: Currently ongoing allocations
-- **completed**: Allocations that finished naturally (past end date)
-- **cancelled**: Allocations removed before completion (e.g., moved to bench)
+Allocation History (chronological order by start date):
+
+  - Project Gamma: 100%
+    Period: 2024-01-01 to 2024-06-30 [PAST]
+  - Project Alpha: 50%
+    Period: 2025-01-01 to 2025-06-30 [CURRENT]
+  - Project Beta: 50%
+    Period: 2025-01-01 to 2025-03-31 [CURRENT]
+```
+
+## Date-Based Allocation Tracking
+
+The system automatically determines allocation status based on dates:
+
+- **CURRENT**: `endDate >= today` - Allocation is currently active
+- **PAST**: `endDate < today` - Allocation has ended
+
+**How it works:**
+- All allocations are preserved forever - never deleted
+- Active vs. past is determined automatically by comparing end date to today
+- When you move an engineer to bench, their active allocations have `endDate` set to yesterday
+- This preserves complete history while automatically reflecting current state
 
 **Benefits:**
-- Track who worked on projects historically
-- Maintain audit trail of allocations
+- Automatic status determination - no manual tracking needed
+- Complete audit trail of all allocations
 - Answer questions like "Who has worked on this project?" including past team members
-- Analyze resource allocation patterns over time
+- Chronological view shows the timeline of who worked when
+- Over-allocation prevention only counts CURRENT allocations (endDate >= today)
 
-**Note:** When you move an engineer to the bench, their allocations are marked as "cancelled" rather than deleted, preserving the history.
+**Example Scenarios:**
+1. **Allocation ends naturally**: When endDate passes, it automatically becomes PAST
+2. **Move to bench**: System sets endDate to yesterday, immediately marking it as PAST
+3. **View history**: See complete chronological list: eng1 2024-01-01 to 2024-06-30, eng2 2024-03-01 to 2024-12-31, etc.
 
 ## Available MCP Resources
 

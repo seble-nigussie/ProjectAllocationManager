@@ -5,8 +5,7 @@
     "projectId": "proj-001",
     "allocationPercentage": 50,
     "startDate": "2025-01-01",
-    "endDate": "2025-06-30",
-    "status": "active"
+    "endDate": "2025-06-30"
   },
   {
     "id": "alloc-002",
@@ -14,8 +13,7 @@
     "projectId": "proj-002",
     "allocationPercentage": 50,
     "startDate": "2025-01-01",
-    "endDate": "2025-03-31",
-    "status": "active"
+    "endDate": "2025-03-31"
   },
   {
     "id": "alloc-003",
@@ -23,8 +21,7 @@
     "projectId": "proj-001",
     "allocationPercentage": 100,
     "startDate": "2025-01-01",
-    "endDate": "2025-12-31",
-    "status": "active"
+    "endDate": "2025-12-31"
   },
   {
     "id": "alloc-004",
@@ -32,8 +29,7 @@
     "projectId": "proj-001",
     "allocationPercentage": 75,
     "startDate": "2024-06-01",
-    "endDate": "2024-12-31",
-    "status": "completed"
+    "endDate": "2024-12-31"
   },
   {
     "id": "alloc-005",
@@ -41,7 +37,14 @@
     "projectId": "proj-002",
     "allocationPercentage": 50,
     "startDate": "2024-09-01",
-    "endDate": "2025-02-28",
-    "status": "cancelled"
+    "endDate": "2024-11-15"
+  },
+  {
+    "id": "alloc-006",
+    "engineerId": "eng-001",
+    "projectId": "proj-003",
+    "allocationPercentage": 100,
+    "startDate": "2024-01-01",
+    "endDate": "2024-06-30"
   }
 ]
