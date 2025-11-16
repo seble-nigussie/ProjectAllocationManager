@@ -11,11 +11,11 @@ public static class AllocationTools
     [McpServerTool, Description("Allocate an engineer to a project with a specified percentage")]
     public static async Task<object> AllocateEngineer(
         AllocationService allocationService,
-        [Description("The ID of the engineer to allocate (e.g., 'eng-001')")] string engineerId,
-        [Description("The ID of the project (e.g., 'proj-001')")] string projectId,
-        [Description("The percentage of time allocated (0-100)")] int allocationPercentage,
-        [Description("Start date in YYYY-MM-DD format")] string startDate,
-        [Description("End date in YYYY-MM-DD format")] string endDate)
+        [Description("REQUIRED: The ID of the engineer to allocate (e.g., 'eng-001'). Ask the user for this value.")] string engineerId,
+        [Description("REQUIRED: The ID of the project (e.g., 'proj-001'). Ask the user for this value.")] string projectId,
+        [Description("REQUIRED: The percentage of time allocated (0-100). Ask the user for this value.")] int allocationPercentage,
+        [Description("REQUIRED: Allocation start date in YYYY-MM-DD format. Ask the user to provide the start date.")] string startDate,
+        [Description("REQUIRED: Allocation end date in YYYY-MM-DD format. Ask the user to provide the end date.")] string endDate)
     {
         var result = await allocationService.AllocateEngineerAsync(
             engineerId, projectId, allocationPercentage, startDate, endDate);

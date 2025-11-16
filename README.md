@@ -80,12 +80,14 @@ ProjectAllocationManager/
 ### 1. allocate_engineer
 Allocate an engineer to a project with a specified percentage.
 
-**Parameters:**
-- `engineerId` (string): The ID of the engineer (e.g., 'eng-001')
-- `projectId` (string): The ID of the project (e.g., 'proj-001')
-- `allocationPercentage` (number): Percentage of time allocated (0-100)
-- `startDate` (string): Start date in YYYY-MM-DD format
-- `endDate` (string): End date in YYYY-MM-DD format
+**Parameters:** (All parameters are REQUIRED)
+- `engineerId` (string, required): The ID of the engineer (e.g., 'eng-001')
+- `projectId` (string, required): The ID of the project (e.g., 'proj-001')
+- `allocationPercentage` (number, required): Percentage of time allocated (0-100)
+- `startDate` (string, required): Start date in YYYY-MM-DD format
+- `endDate` (string, required): End date in YYYY-MM-DD format
+
+**Note:** All parameters must be provided. The AI assistant will request these values from the user if not provided.
 
 **Example:**
 ```json
