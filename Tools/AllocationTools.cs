@@ -45,4 +45,19 @@ public static class AllocationTools
             message = result.Message
         };
     }
+
+    [McpServerTool, Description("Move an engineer to the bench by removing all their project allocations")]
+    public static async Task<object> MoveEngineerToBench(
+        AllocationService allocationService,
+        [Description("The ID of the engineer to move to bench (e.g., 'eng-001')")] string engineerId)
+    {
+        var result = await allocationService.MoveEngineerToBenchAsync(engineerId);
+
+        return new
+        {
+            success = result.Success,
+            message = result.Message,
+            removedAllocations = result.RemovedCount
+        };
+    }
 }

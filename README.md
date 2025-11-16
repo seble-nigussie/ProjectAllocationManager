@@ -115,7 +115,20 @@ Update an existing allocation's percentage, start date, or end date.
 }
 ```
 
-### 3. get_engineer_allocations
+### 3. move_engineer_to_bench
+Move an engineer to the bench by removing all their project allocations.
+
+**Parameters:**
+- `engineerId` (string): The ID of the engineer to move to bench (e.g., 'eng-001')
+
+**Example:**
+```json
+{
+  "engineerId": "eng-002"
+}
+```
+
+### 4. get_engineer_allocations
 View all allocations for a specific engineer.
 
 **Parameters:**
@@ -128,22 +141,22 @@ View all allocations for a specific engineer.
 }
 ```
 
-### 4. get_bench_engineers
+### 5. get_bench_engineers
 Get a list of all engineers with 0% allocation (on bench/available).
 
 **Parameters:** None
 
-### 5. get_all_allocations
+### 6. get_all_allocations
 View all current allocations across all engineers and projects.
 
 **Parameters:** None
 
-### 6. list_engineers
+### 7. list_engineers
 List all engineers with their details.
 
 **Parameters:** None
 
-### 7. list_projects
+### 8. list_projects
 List all projects with their details.
 
 **Parameters:** None

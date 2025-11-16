@@ -155,6 +155,35 @@ public class AllocationService
         return (true, $"Successfully updated allocation '{allocationId}'.");
     }
 
+    public async Task<(bool Success, string Message, int RemovedCount)> MoveEngineerToBenchAsync(string engineerId)
+    {
+        var engineers = await GetEngineersAsync();
+        var allocations = await GetAllocationsAsync();
+
+        var engineer = engineers.FirstOrDefault(e => e.Id == engineerId);
+        if (engineer == null)
+        {
+            return (false, $"Engineer with ID '{engineerId}' not found.", 0);
+        }
+
+        var engineerAllocations = allocations.Where(a => a.EngineerId == engineerId).ToList();
+
+        if (!engineerAllocations.Any())
+        {
+            return (true, $"Engineer '{engineer.Name}' is already on the bench (no allocations to remove).", 0);
+        }
+
+        var removedCount = engineerAllocations.Count;
+        var removedAllocationIds = engineerAllocations.Select(a => a.Id).ToList();
+
+        // Remove all allocations for this engineer
+        var updatedAllocations = allocations.Where(a => a.EngineerId != engineerId).ToList();
+        await SaveAllocationsAsync(updatedAllocations);
+
+        var removedProjects = string.Join(", ", removedAllocationIds);
+        return (true, $"Successfully moved {engineer.Name} to bench. Removed {removedCount} allocation(s): {removedProjects}.", removedCount);
+    }
+
     public async Task<string> GetEngineerAllocationsAsync(string engineerId)
     {
         var engineers = await GetEngineersAsync();
