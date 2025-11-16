@@ -218,56 +218,94 @@ Get detailed information about a specific project including:
 
 ## Available MCP Prompts
 
-Prompts help the LLM answer natural language questions by providing guided templates for common queries.
+Prompts are **instructional templates** that guide the LLM on how to answer user questions by using the available tools and resources. When a user asks a question, the LLM can select an appropriate prompt to get step-by-step instructions on which tools to call and how to format the response.
 
 ### 1. who_worked_on_project
-Answer questions like "Who worked on Project Alpha?" or "Who is working on proj-001?"
+**Purpose:** Provides instructions for answering "Who worked on this project?" questions
 
 **Parameters:**
-- `project` (string): The project name or ID to query
+- `project` (string): The project name or ID the user is asking about
 
-**Example Questions:**
+**What it does:** Gives the LLM step-by-step instructions on:
+- Which tools to use (`list_projects`, resources, etc.)
+- How to handle ambiguous project names
+- How to format the response with engineer details
+
+**Example user questions:**
 - "Who worked on Project Alpha?"
 - "Show me everyone on proj-001"
 - "Which engineers are allocated to Project Beta?"
 
 ### 2. what_projects_did_engineer_work_on
-Answer questions like "What projects did Alice work on?" or "Show me eng-001's projects"
+**Purpose:** Provides instructions for answering "What projects did this engineer work on?" questions
 
 **Parameters:**
-- `engineer` (string): The engineer name or ID to query
+- `engineer` (string): The engineer name or ID the user is asking about
 
-**Example Questions:**
+**What it does:** Guides the LLM to:
+- Find the engineer using `list_engineers`
+- Retrieve allocation details using resources or tools
+- Calculate and display total allocation and capacity
+
+**Example user questions:**
 - "What projects has Alice Johnson worked on?"
 - "Show me all projects for eng-002"
 - "Which projects is Bob assigned to?"
 
 ### 3. get_allocation_overview
-Get a comprehensive overview of all allocations across projects and engineers.
+**Purpose:** Instructs how to provide a comprehensive allocation overview
 
 **Parameters:** None
 
-**Example Questions:**
+**What it does:** Tells the LLM to:
+- Combine data from multiple tools (`list_projects`, `list_engineers`, `get_all_allocations`)
+- Organize into sections (Summary, Projects, Availability, Issues)
+- Highlight potential problems or opportunities
+
+**Example user questions:**
 - "Give me an allocation overview"
 - "Show me the current resource allocation"
 - "What's the status of all projects and engineers?"
 
 ### 4. find_available_engineers
-Find engineers who have available capacity, optionally filtered by skill.
+**Purpose:** Instructions for finding engineers with available capacity
 
 **Parameters:**
 - `skill` (string, optional): Skill to filter by (e.g., 'React', 'Python')
 
-**Example Questions:**
+**What it does:** Guides the LLM to:
+- Calculate available capacity for each engineer
+- Filter by skills if requested
+- Sort by availability and format results
+
+**Example user questions:**
 - "Which engineers are available?"
 - "Find engineers with React skills who have capacity"
 - "Who's on the bench with Python experience?"
 
+### 5. plan_project_allocation
+**Purpose:** Instructions for helping plan resource allocation for a new project
+
+**Parameters:**
+- `project` (string): The project name or description
+- `requiredSkills` (string, optional): Skills needed for the project
+
+**What it does:** Guides the LLM to:
+- Identify available engineers matching required skills
+- Suggest team composition based on capacity
+- Provide next steps for creating allocations
+
+**Example user questions:**
+- "Help me plan staffing for Project Delta"
+- "I need a team for a React project, who's available?"
+- "Plan allocation for a Python/ML project"
+
 **How Prompts Work:**
-- Prompts handle natural language → structured data lookups
-- They support fuzzy matching (partial names work)
-- They provide helpful error messages with suggestions
-- They format results in readable markdown
+- Prompts are **instructions**, not implementations
+- The LLM reads the prompt and follows the steps
+- The LLM then uses the specified tools/resources to gather data
+- The LLM formats the final response based on the prompt's guidance
+- This allows flexible, intelligent responses to natural language questions
 
 ## Setup
 

@@ -1,268 +1,214 @@
 using System.ComponentModel;
 using ModelContextProtocol;
 using ModelContextProtocol.Server;
-using ProjectAllocationManager.Services;
 
 namespace ProjectAllocationManager.Prompts;
 
 [McpServerPromptType]
-public class AllocationPrompts
+public static class AllocationPrompts
 {
-    [McpServerPrompt, Description("Get information about who worked or is working on a specific project")]
-    public static async Task<string> WhoWorkedOnProject(
-        AllocationService allocationService,
-        [Description("The project name or ID (e.g., 'Project Alpha' or 'proj-001')")] string project)
+    [McpServerPrompt, Description("Instructions for answering 'Who worked on this project?' type questions")]
+    public static string WhoWorkedOnProject(
+        [Description("The project name or ID the user is asking about")] string project)
     {
-        var projects = await allocationService.GetProjectsAsync();
-        var engineers = await allocationService.GetEngineersAsync();
-        var allocations = await allocationService.GetAllocationsAsync();
+        return $"""
+            The user wants to know who worked or is working on the project: "{project}"
 
-        // Try to find project by ID first, then by name
-        var foundProject = projects.FirstOrDefault(p =>
-            p.Id.Equals(project, StringComparison.OrdinalIgnoreCase) ||
-            p.Name.Equals(project, StringComparison.OrdinalIgnoreCase) ||
-            p.Name.Contains(project, StringComparison.OrdinalIgnoreCase));
+            To answer this question, follow these steps:
 
-        if (foundProject == null)
-        {
-            var availableProjects = string.Join("\n", projects.Select(p => $"- {p.Name} ({p.Id})"));
-            return $"""
-                Project '{project}' not found.
+            1. First, use the `list_projects` tool to see all available projects
+            2. Find the project that matches "{project}" (could be by name or ID)
+            3. Once you have the project ID, use the resource `allocation://project/{{projectId}}` to get detailed information
+            4. The resource will show all engineers allocated to that project with their:
+               - Names and roles
+               - Allocation percentages
+               - Time periods (start and end dates)
+               - Skills
 
-                Available projects:
-                {availableProjects}
+            Alternative approach:
+            - You can also use `get_all_allocations` tool and filter for the specific project
 
-                Please use the exact project name or ID.
-                """;
-        }
+            If the project name is ambiguous or not found:
+            - Show the user the list of available projects from `list_projects`
+            - Ask them to clarify which project they mean
 
-        var projectAllocations = allocations.Where(a => a.ProjectId == foundProject.Id).ToList();
-
-        if (!projectAllocations.Any())
-        {
-            return $"""
-                # {foundProject.Name}
-
-                **Status:** {foundProject.Status}
-                **Description:** {foundProject.Description}
-
-                No engineers have been allocated to this project yet.
-                """;
-        }
-
-        var result = $"""
-            # {foundProject.Name}
-
-            **Project ID:** {foundProject.Id}
-            **Status:** {foundProject.Status}
-            **Description:** {foundProject.Description}
-
-            ## Engineers Working on This Project
-
+            Format your response to clearly show:
+            - Project name and description
+            - Each engineer's name, role, and allocation percentage
+            - The time period they're allocated
             """;
-
-        foreach (var allocation in projectAllocations)
-        {
-            var engineer = engineers.FirstOrDefault(e => e.Id == allocation.EngineerId);
-            if (engineer != null)
-            {
-                result += $"""
-                    ### {engineer.Name}
-                    - **Role:** {engineer.Role}
-                    - **Allocation:** {allocation.AllocationPercentage}%
-                    - **Period:** {allocation.StartDate} to {allocation.EndDate}
-                    - **Skills:** {string.Join(", ", engineer.Skills)}
-
-                    """;
-            }
-        }
-
-        var totalAllocation = projectAllocations.Sum(a => a.AllocationPercentage);
-        result += $"\n**Total Project Allocation:** {totalAllocation}% (sum of all engineer percentages)\n";
-        result += $"**Number of Engineers:** {projectAllocations.Count}\n";
-
-        return result;
     }
 
-    [McpServerPrompt, Description("Find projects that a specific engineer has worked on or is currently working on")]
-    public static async Task<string> WhatProjectsDidEngineerWorkOn(
-        AllocationService allocationService,
-        [Description("The engineer name or ID (e.g., 'Alice Johnson' or 'eng-001')")] string engineer)
+    [McpServerPrompt, Description("Instructions for answering 'What projects did this engineer work on?' type questions")]
+    public static string WhatProjectsDidEngineerWorkOn(
+        [Description("The engineer name or ID the user is asking about")] string engineer)
     {
-        var engineers = await allocationService.GetEngineersAsync();
-        var projects = await allocationService.GetProjectsAsync();
-        var allocations = await allocationService.GetAllocationsAsync();
+        return $"""
+            The user wants to know what projects the engineer "{engineer}" worked on or is working on.
 
-        // Try to find engineer by ID first, then by name
-        var foundEngineer = engineers.FirstOrDefault(e =>
-            e.Id.Equals(engineer, StringComparison.OrdinalIgnoreCase) ||
-            e.Name.Equals(engineer, StringComparison.OrdinalIgnoreCase) ||
-            e.Name.Contains(engineer, StringComparison.OrdinalIgnoreCase));
+            To answer this question, follow these steps:
 
-        if (foundEngineer == null)
-        {
-            var availableEngineers = string.Join("\n", engineers.Select(e => $"- {e.Name} ({e.Id})"));
-            return $"""
-                Engineer '{engineer}' not found.
+            1. First, use the `list_engineers` tool to see all available engineers
+            2. Find the engineer that matches "{engineer}" (could be by name or ID)
+            3. Once you have the engineer ID, use the resource `allocation://engineer/{{engineerId}}` to get detailed information
+            4. The resource will show:
+               - The engineer's current allocations
+               - Total allocation percentage
+               - Available capacity
+               - All projects they're assigned to with percentages and dates
 
-                Available engineers:
-                {availableEngineers}
+            Alternative approach:
+            - Use the `get_engineer_allocations` tool with the engineer ID
+            - Or use `get_all_allocations` and filter for this engineer
 
-                Please use the exact engineer name or ID.
-                """;
-        }
+            If the engineer name is ambiguous or not found:
+            - Show the user the list of available engineers from `list_engineers`
+            - Ask them to clarify which engineer they mean
 
-        var engineerAllocations = allocations.Where(a => a.EngineerId == foundEngineer.Id).ToList();
-
-        if (!engineerAllocations.Any())
-        {
-            return $"""
-                # {foundEngineer.Name}
-
-                **Role:** {foundEngineer.Role}
-                **Skills:** {string.Join(", ", foundEngineer.Skills)}
-
-                This engineer is currently on the bench (no project allocations).
-                """;
-        }
-
-        var totalAllocation = engineerAllocations.Sum(a => a.AllocationPercentage);
-
-        var result = $"""
-            # {foundEngineer.Name}
-
-            **Engineer ID:** {foundEngineer.Id}
-            **Role:** {foundEngineer.Role}
-            **Skills:** {string.Join(", ", foundEngineer.Skills)}
-            **Total Allocation:** {totalAllocation}%
-            **Available Capacity:** {100 - totalAllocation}%
-
-            ## Projects
-
+            Format your response to clearly show:
+            - Engineer's name, role, and skills
+            - Each project they're on with allocation percentage
+            - Time periods for each allocation
+            - Total allocation and remaining capacity
             """;
-
-        foreach (var allocation in engineerAllocations)
-        {
-            var project = projects.FirstOrDefault(p => p.Id == allocation.ProjectId);
-            if (project != null)
-            {
-                result += $"""
-                    ### {project.Name}
-                    - **Project Status:** {project.Status}
-                    - **Allocation:** {allocation.AllocationPercentage}%
-                    - **Period:** {allocation.StartDate} to {allocation.EndDate}
-                    - **Description:** {project.Description}
-
-                    """;
-            }
-        }
-
-        return result;
     }
 
-    [McpServerPrompt, Description("Get an overview of current resource allocation across all projects and engineers")]
-    public static async Task<string> GetAllocationOverview(AllocationService allocationService)
+    [McpServerPrompt, Description("Instructions for providing an overview of all project allocations")]
+    public static string GetAllocationOverview()
     {
-        var engineers = await allocationService.GetEngineersAsync();
-        var projects = await allocationService.GetProjectsAsync();
-        var allocations = await allocationService.GetAllocationsAsync();
+        return """
+            The user wants a comprehensive overview of all project allocations.
 
-        var result = """
-            # Project Allocation Overview
+            To provide this overview, use the following tools and resources:
+
+            1. Use `list_projects` to get all projects
+            2. Use `list_engineers` to get all engineers
+            3. Use `get_all_allocations` to get all current allocations
+            4. Use `get_bench_engineers` to see who's available
+
+            Organize your response with:
 
             ## Summary
+            - Total number of projects (active, planning, etc.)
+            - Total number of engineers
+            - Number of engineers on bench (0% allocated)
+            - Number of engineers with allocations
 
+            ## Projects Overview
+            For each project, show:
+            - Project name and status
+            - Number of engineers allocated
+            - List of engineers with their allocation percentages
+
+            ## Resource Availability
+            - List engineers on the bench
+            - List engineers with partial availability (< 100% allocated)
+            - Show which engineers are fully allocated
+
+            ## Potential Issues
+            - Highlight any over-allocation warnings
+            - Note projects with no engineers assigned
+            - Identify engineers who might be under-utilized
+
+            Use the resources `allocation://projects/list` and `allocation://engineers/list`
+            for nicely formatted overview data.
             """;
-
-        result += $"- **Total Engineers:** {engineers.Count}\n";
-        result += $"- **Total Projects:** {projects.Count}\n";
-        result += $"- **Total Allocations:** {allocations.Count}\n\n";
-
-        // Calculate bench engineers
-        var benchEngineers = engineers.Where(e =>
-            !allocations.Any(a => a.EngineerId == e.Id)).ToList();
-
-        result += $"- **Engineers on Bench:** {benchEngineers.Count}\n";
-        result += $"- **Engineers Allocated:** {engineers.Count - benchEngineers.Count}\n\n";
-
-        // Project breakdown
-        result += "## Projects\n\n";
-        foreach (var project in projects)
-        {
-            var projectAllocations = allocations.Where(a => a.ProjectId == project.Id).ToList();
-            var engineerCount = projectAllocations.Count;
-            var totalAllocation = projectAllocations.Sum(a => a.AllocationPercentage);
-
-            result += $"### {project.Name} ({project.Status})\n";
-            result += $"- **Engineers:** {engineerCount}\n";
-            result += $"- **Total Allocation:** {totalAllocation}%\n\n";
-        }
-
-        // Bench engineers
-        if (benchEngineers.Any())
-        {
-            result += "## Available Engineers (On Bench)\n\n";
-            foreach (var engineer in benchEngineers)
-            {
-                result += $"- {engineer.Name} ({engineer.Role})\n";
-            }
-        }
-
-        return result;
     }
 
-    [McpServerPrompt, Description("Find available engineers with specific skills or on the bench")]
-    public static async Task<string> FindAvailableEngineers(
-        AllocationService allocationService,
-        [Description("(Optional) Skill to search for (e.g., 'React', 'Python'). Leave empty to find all available engineers.")] string? skill = null)
+    [McpServerPrompt, Description("Instructions for finding available engineers, optionally with specific skills")]
+    public static string FindAvailableEngineers(
+        [Description("(Optional) Specific skill to search for, like 'React' or 'Python'")] string? skill = null)
     {
-        var engineers = await allocationService.GetEngineersAsync();
-        var allocations = await allocationService.GetAllocationsAsync();
+        var skillFilter = skill != null ? $" with the skill '{skill}'" : "";
 
-        var result = "# Available Engineers\n\n";
+        return $"""
+            The user wants to find available engineers{skillFilter}.
 
-        var availableEngineers = new List<(Engineer Engineer, int Capacity)>();
+            To answer this question, follow these steps:
 
-        foreach (var engineer in engineers)
-        {
-            var totalAllocation = allocations
-                .Where(a => a.EngineerId == engineer.Id)
-                .Sum(a => a.AllocationPercentage);
+            1. Use `list_engineers` to get all engineers and their skills
+            2. Use `get_all_allocations` to see current allocations
+            3. For each engineer, calculate their available capacity:
+               - Sum up all their allocation percentages
+               - Available capacity = 100% - total allocations
 
-            var capacity = 100 - totalAllocation;
+            {(skill != null ? $"""
+            4. Filter engineers to only show those with the skill '{skill}' in their skills list
+            """ : "")}
 
-            // Filter by skill if provided
-            if (skill != null && !engineer.Skills.Any(s => s.Contains(skill, StringComparison.OrdinalIgnoreCase)))
-            {
-                continue;
-            }
+            Alternative approaches:
+            - Use `get_bench_engineers` to find engineers with 0% allocation
+            - Use resources `allocation://engineer/{{engineerId}}` for detailed capacity info
 
-            if (capacity > 0)
-            {
-                availableEngineers.Add((engineer, capacity));
-            }
-        }
+            Format your response to show:
 
-        if (!availableEngineers.Any())
-        {
-            result += skill != null
-                ? $"No available engineers found with skill: {skill}\n"
-                : "No available engineers found. All engineers are fully allocated.\n";
-            return result;
-        }
+            ## Fully Available Engineers (0% allocated)
+            - List engineers on the bench
+            - Show their roles and skills
 
-        result += skill != null
-            ? $"Engineers with skill '{skill}' and available capacity:\n\n"
-            : "Engineers with available capacity:\n\n";
+            ## Partially Available Engineers
+            - List engineers with < 100% allocation
+            - Show their available capacity percentage
+            - Show their current allocations
+            - List their skills
 
-        foreach (var (engineer, capacity) in availableEngineers.OrderByDescending(x => x.Capacity))
-        {
-            result += $"## {engineer.Name}\n";
-            result += $"- **Role:** {engineer.Role}\n";
-            result += $"- **Available Capacity:** {capacity}%\n";
-            result += $"- **Skills:** {string.Join(", ", engineer.Skills)}\n\n";
-        }
+            {(skill != null ? $"""
+            Note: Only include engineers who have '{skill}' in their skills list.
 
-        return result;
+            If no engineers with that skill are available, suggest:
+            - Engineers with that skill who might have capacity soon
+            - Alternative skills that might be suitable
+            """ : "")}
+
+            Sort the results by available capacity (highest to lowest) for easy planning.
+            """;
+    }
+
+    [McpServerPrompt, Description("Instructions for helping plan resource allocation for a new project")]
+    public static string PlanProjectAllocation(
+        [Description("The project name or description")] string project,
+        [Description("(Optional) Required skills for the project")] string? requiredSkills = null)
+    {
+        return $"""
+            The user wants to plan resource allocation for the project: "{project}"
+            {(requiredSkills != null ? $"Required skills: {requiredSkills}" : "")}
+
+            To help with this planning, follow these steps:
+
+            1. Use `get_bench_engineers` to find available engineers
+            2. Use `list_engineers` to see all engineers and their skills
+            3. Use `get_all_allocations` to understand current workload
+            4. For each engineer, check their availability using `allocation://engineer/{{engineerId}}`
+
+            {(requiredSkills != null ? $"""
+            5. Filter for engineers who have the required skills: {requiredSkills}
+            """ : "")}
+
+            Provide recommendations that include:
+
+            ## Available Engineers
+            List engineers who are:
+            - Fully available (on bench)
+            - Partially available (< 100% allocated)
+            - Show their skills and current allocations
+
+            ## Suggested Team Composition
+            Based on the required skills, suggest:
+            - Which engineers would be good fits
+            - Their available capacity percentages
+            - Potential allocation percentages for this project
+
+            ## Planning Considerations
+            - Note when current allocations end (engineers becoming available)
+            - Identify any skill gaps that might need hiring/training
+            - Suggest optimal team size based on available capacity
+
+            ## Next Steps
+            Tell the user they can use the `allocate_engineer` tool to make the allocations:
+            - They'll need to provide: engineerId, projectId, percentage, start date, end date
+            - Remind them the system prevents over-allocation (validates total doesn't exceed 100%)
+
+            If the project doesn't exist yet, suggest they add it to data/projects.json first.
+            """;
     }
 }
