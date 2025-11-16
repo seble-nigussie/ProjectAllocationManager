@@ -18,6 +18,12 @@ This MCP server provides:
 - Get detailed information about specific engineers or projects
 - Access data in both formatted and raw JSON formats
 
+**Prompts** for natural language queries:
+- "Who worked on this project?"
+- "What projects did this engineer work on?"
+- "Who's available with React skills?"
+- Get allocation overviews and summaries
+
 ## Project Structure
 
 ```
@@ -37,6 +43,8 @@ ProjectAllocationManager/
 │   └── QueryTools.cs      # Query & list tools
 ├── Resources/
 │   └── AllocationResources.cs # MCP resources for data access
+├── Prompts/
+│   └── AllocationPrompts.cs # MCP prompts for natural language queries
 ├── Program.cs             # MCP server initialization
 └── README.md
 ```
@@ -207,6 +215,59 @@ Get detailed information about a specific project including:
 - Individual allocation percentages and durations
 
 **Example:** `allocation://project/proj-001`
+
+## Available MCP Prompts
+
+Prompts help the LLM answer natural language questions by providing guided templates for common queries.
+
+### 1. who_worked_on_project
+Answer questions like "Who worked on Project Alpha?" or "Who is working on proj-001?"
+
+**Parameters:**
+- `project` (string): The project name or ID to query
+
+**Example Questions:**
+- "Who worked on Project Alpha?"
+- "Show me everyone on proj-001"
+- "Which engineers are allocated to Project Beta?"
+
+### 2. what_projects_did_engineer_work_on
+Answer questions like "What projects did Alice work on?" or "Show me eng-001's projects"
+
+**Parameters:**
+- `engineer` (string): The engineer name or ID to query
+
+**Example Questions:**
+- "What projects has Alice Johnson worked on?"
+- "Show me all projects for eng-002"
+- "Which projects is Bob assigned to?"
+
+### 3. get_allocation_overview
+Get a comprehensive overview of all allocations across projects and engineers.
+
+**Parameters:** None
+
+**Example Questions:**
+- "Give me an allocation overview"
+- "Show me the current resource allocation"
+- "What's the status of all projects and engineers?"
+
+### 4. find_available_engineers
+Find engineers who have available capacity, optionally filtered by skill.
+
+**Parameters:**
+- `skill` (string, optional): Skill to filter by (e.g., 'React', 'Python')
+
+**Example Questions:**
+- "Which engineers are available?"
+- "Find engineers with React skills who have capacity"
+- "Who's on the bench with Python experience?"
+
+**How Prompts Work:**
+- Prompts handle natural language → structured data lookups
+- They support fuzzy matching (partial names work)
+- They provide helpful error messages with suggestions
+- They format results in readable markdown
 
 ## Setup
 
