@@ -455,6 +455,32 @@ Add this configuration to your Claude Desktop config file:
 **macOS:** `~/Library/Application Support/Claude/claude_desktop_config.json`
 **Windows:** `%APPDATA%/Claude/claude_desktop_config.json`
 
+#### Option 1: With Auto-Build (Recommended for Development)
+
+This automatically rebuilds on each connection, so your changes are always reflected:
+
+```json
+{
+  "mcpServers": {
+    "project-allocation-manager": {
+      "command": "dotnet",
+      "args": [
+        "run",
+        "--project",
+        "C:\\Users\\YourUsername\\Path\\To\\ProjectAllocationManager"
+      ]
+    }
+  }
+}
+```
+
+**Pros:** Changes are automatically picked up
+**Cons:** Slightly slower connection startup (build time)
+
+#### Option 2: Without Auto-Build (Faster Startup)
+
+Use this if you want faster connection times and don't mind manually rebuilding:
+
 ```json
 {
   "mcpServers": {
@@ -471,12 +497,15 @@ Add this configuration to your Claude Desktop config file:
 }
 ```
 
+**Pros:** Faster connection startup
+**Cons:** Must manually run `dotnet build` after each code change
+
 **Important Configuration Notes:**
 
 1. **Replace the path** with the actual full path to your ProjectAllocationManager directory
 2. **On Windows**, use double backslashes (`\\`) in the path
-3. **Always include `--no-build`** - This is critical to prevent build output from interfering with MCP STDIO communication
-4. **Build first** - Always run `dotnet build` before starting Claude Desktop
+3. **Try Option 1 first** - Since we've configured logging suppression, auto-build should work cleanly
+4. **Use Option 2 if you experience STDIO errors** with auto-build
 
 ### Troubleshooting STDIO Errors
 
@@ -487,20 +516,34 @@ Error from MCP server: SyntaxError: Unexpected token 'C', "C:\Program"... is not
 
 This means non-JSON output is being written to stdout. Try these fixes:
 
-1. **Ensure you built the project**:
+1. **Switch to `--no-build` configuration** (Option 2 above):
+   Add `"--no-build"` to the args array and run `dotnet build` manually
+
+2. **Verify your configuration path**:
+   - Ensure the path to your project is correct
+   - On Windows, use double backslashes: `C:\\Users\\...`
+   - The path should point to the project directory (containing the .csproj file)
+
+3. **Build the project first** (if using `--no-build`):
    ```bash
    dotnet build
    ```
 
-2. **Verify `--no-build` is in your config**:
-   The args array must include `"--no-build"` as shown above
-
-3. **Check your path has no spaces**:
-   If your path contains spaces, ensure it's properly quoted in the JSON config
-
 4. **Restart Claude Desktop** after changing the configuration
 
 5. **Check logs**: Look at Claude Desktop's logs for more detailed error information
+
+### Development Workflow
+
+#### With Auto-Build (Option 1):
+1. Make your code changes
+2. Save files
+3. Restart/reconnect in Claude Desktop - changes are automatically built and loaded
+
+#### With `--no-build` (Option 2):
+1. Make your code changes
+2. Run `dotnet build` in the project directory
+3. Restart/reconnect in Claude Desktop - pre-built changes are loaded
 
 ## Usage Examples
 
