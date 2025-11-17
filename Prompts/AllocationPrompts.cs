@@ -11,14 +11,14 @@ public static class AllocationPrompts
     public static string WhoWorkedOnProject(
         [Description("The project name or ID the user is asking about")] string project)
     {
-        return $"""
-            The user wants to know who worked or is working on the project: "{project}"
+        return $$"""
+            The user wants to know who worked or is working on the project: "{{project}}"
 
             To answer this question, follow these steps:
 
             1. First, use the `list_projects` tool to see all available projects
-            2. Find the project that matches "{project}" (could be by name or ID)
-            3. Once you have the project ID, use the resource `allocation://project/{{projectId}}` to get detailed information
+            2. Find the project that matches "{{project}}" (could be by name or ID)
+            3. Once you have the project ID, use the resource `allocation://project/{projectId}` to get detailed information
             4. The resource will show all engineers allocated to that project with their:
                - Names and roles
                - Allocation percentages
@@ -43,14 +43,14 @@ public static class AllocationPrompts
     public static string WhatProjectsDidEngineerWorkOn(
         [Description("The engineer name or ID the user is asking about")] string engineer)
     {
-        return $"""
-            The user wants to know what projects the engineer "{engineer}" worked on or is working on.
+        return $$"""
+            The user wants to know what projects the engineer "{{engineer}}" worked on or is working on.
 
             To answer this question, follow these steps:
 
             1. First, use the `list_engineers` tool to see all available engineers
-            2. Find the engineer that matches "{engineer}" (could be by name or ID)
-            3. Once you have the engineer ID, use the resource `allocation://engineer/{{engineerId}}` to get detailed information
+            2. Find the engineer that matches "{{engineer}}" (could be by name or ID)
+            3. Once you have the engineer ID, use the resource `allocation://engineer/{engineerId}` to get detailed information
             4. The resource will show:
                - The engineer's current allocations
                - Total allocation percentage
@@ -120,9 +120,17 @@ public static class AllocationPrompts
         [Description("(Optional) Specific skill to search for, like 'React' or 'Python'")] string? skill = null)
     {
         var skillFilter = skill != null ? $" with the skill '{skill}'" : "";
+        var skillFilterStep = skill != null ? $"4. Filter engineers to only show those with the skill '{skill}' in their skills list" : "";
+        var skillNote = skill != null ? $"""
+            Note: Only include engineers who have '{skill}' in their skills list.
 
-        return $"""
-            The user wants to find available engineers{skillFilter}.
+            If no engineers with that skill are available, suggest:
+            - Engineers with that skill who might have capacity soon
+            - Alternative skills that might be suitable
+            """ : "";
+
+        return $$"""
+            The user wants to find available engineers{{skillFilter}}.
 
             To answer this question, follow these steps:
 
@@ -132,13 +140,11 @@ public static class AllocationPrompts
                - Sum up all their allocation percentages
                - Available capacity = 100% - total allocations
 
-            {(skill != null ? $"""
-            4. Filter engineers to only show those with the skill '{skill}' in their skills list
-            """ : "")}
+            {{skillFilterStep}}
 
             Alternative approaches:
             - Use `get_bench_engineers` to find engineers with 0% allocation
-            - Use resources `allocation://engineer/{{engineerId}}` for detailed capacity info
+            - Use resources `allocation://engineer/{engineerId}` for detailed capacity info
 
             Format your response to show:
 
@@ -152,13 +158,7 @@ public static class AllocationPrompts
             - Show their current allocations
             - List their skills
 
-            {(skill != null ? $"""
-            Note: Only include engineers who have '{skill}' in their skills list.
-
-            If no engineers with that skill are available, suggest:
-            - Engineers with that skill who might have capacity soon
-            - Alternative skills that might be suitable
-            """ : "")}
+            {{skillNote}}
 
             Sort the results by available capacity (highest to lowest) for easy planning.
             """;
@@ -169,20 +169,21 @@ public static class AllocationPrompts
         [Description("The project name or description")] string project,
         [Description("(Optional) Required skills for the project")] string? requiredSkills = null)
     {
-        return $"""
-            The user wants to plan resource allocation for the project: "{project}"
-            {(requiredSkills != null ? $"Required skills: {requiredSkills}" : "")}
+        var skillsLine = requiredSkills != null ? $"Required skills: {requiredSkills}" : "";
+        var skillFilterStep = requiredSkills != null ? $"5. Filter for engineers who have the required skills: {requiredSkills}" : "";
+
+        return $$"""
+            The user wants to plan resource allocation for the project: "{{project}}"
+            {{skillsLine}}
 
             To help with this planning, follow these steps:
 
             1. Use `get_bench_engineers` to find available engineers
             2. Use `list_engineers` to see all engineers and their skills
             3. Use `get_all_allocations` to understand current workload
-            4. For each engineer, check their availability using `allocation://engineer/{{engineerId}}`
+            4. For each engineer, check their availability using `allocation://engineer/{engineerId}`
 
-            {(requiredSkills != null ? $"""
-            5. Filter for engineers who have the required skills: {requiredSkills}
-            """ : "")}
+            {{skillFilterStep}}
 
             Provide recommendations that include:
 
