@@ -439,6 +439,17 @@ dotnet watch run
 
 ## Configuration for Claude Desktop
 
+### Step 1: Build the Project First
+
+Before configuring Claude Desktop, build the project once:
+
+```bash
+cd /path/to/ProjectAllocationManager
+dotnet build
+```
+
+### Step 2: Configure Claude Desktop
+
 Add this configuration to your Claude Desktop config file:
 
 **macOS:** `~/Library/Application Support/Claude/claude_desktop_config.json`
@@ -452,7 +463,7 @@ Add this configuration to your Claude Desktop config file:
       "args": [
         "run",
         "--project",
-        "/path/to/ProjectAllocationManager",
+        "C:\\Users\\YourUsername\\Path\\To\\ProjectAllocationManager",
         "--no-build"
       ]
     }
@@ -460,9 +471,36 @@ Add this configuration to your Claude Desktop config file:
 }
 ```
 
-Replace `/path/to/ProjectAllocationManager` with the actual path to your project directory.
+**Important Configuration Notes:**
 
-**Note:** The `--no-build` flag is recommended to avoid build output interfering with STDIO communication.
+1. **Replace the path** with the actual full path to your ProjectAllocationManager directory
+2. **On Windows**, use double backslashes (`\\`) in the path
+3. **Always include `--no-build`** - This is critical to prevent build output from interfering with MCP STDIO communication
+4. **Build first** - Always run `dotnet build` before starting Claude Desktop
+
+### Troubleshooting STDIO Errors
+
+If you see errors like:
+```
+Error from MCP server: SyntaxError: Unexpected token 'C', "C:\Program"... is not valid JSON
+```
+
+This means non-JSON output is being written to stdout. Try these fixes:
+
+1. **Ensure you built the project**:
+   ```bash
+   dotnet build
+   ```
+
+2. **Verify `--no-build` is in your config**:
+   The args array must include `"--no-build"` as shown above
+
+3. **Check your path has no spaces**:
+   If your path contains spaces, ensure it's properly quoted in the JSON config
+
+4. **Restart Claude Desktop** after changing the configuration
+
+5. **Check logs**: Look at Claude Desktop's logs for more detailed error information
 
 ## Usage Examples
 
